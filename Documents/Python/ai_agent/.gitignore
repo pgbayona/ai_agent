@@ -1,0 +1,44 @@
+# --- Python ---
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.pyo
+*.pyd
+*.so
+dist/
+build/
+
+# --- Streamlit / secrets ---
+.streamlit/secrets.toml
+
+# --- Env & secrets (VERY IMPORTANT) ---
+.env
+.env.*.local
+*.secret
+
+# --- OS / Editor junk ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.code-workspace
+
+# --- Notebooks / cache ---
+.ipynb_checkpoints/
+.pytest_cache/
+.cache/
+
+# --- Logs ---
+logs/
+*.log
+
+# --- Data (optional; keep out of git) ---
+data/
+*.csv
+*.xlsx
+*.parquet
+*.jsonl
+
+# --- App artifacts ---
+*.tmp
