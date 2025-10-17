@@ -16,26 +16,67 @@
 #.\.venv\Scripts\activate
 # streamlit run wto_app.py
 
+#push to git
+#git init
+#git add -A
+#git commit -m "Initial commit"
+#git branch -M main
+#git remote add origin https://github.com/pgbayona/ai_agent.git
+#git push -u origin main
+
+from typing import Optional
 from langgraph.func import entrypoint, task
-from openai import OpenAI
+from openai import AzureOpenAI
 import os, re
 
 # 1) API key
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 # 2) Minimal LLM wrapper
-def llm(prompt: str, api_key: str | None = OPENAI_API_KEY, model: str = "gpt-4o") -> str:
-    client = OpenAI(api_key=api_key)
+
+# --- Azure-style config (matches your format) ---
+endpoint = "https://oaishrp01.openai.azure.com/"
+model_name = "gpt-4o-mini"                 # informational; not passed to the API
+deployment = "gpt-4o-mini-bayona-1dx6p"    # this is what you pass as model=
+api_version = "2024-12-01-preview"
+
+# Prefer env var; fall back to a literal if you must
+subscription_key = OPENAI_API_KEY 
+
+# Optional: create a module-level client
+_client = AzureOpenAI(
+    api_version=api_version,
+    azure_endpoint=endpoint,
+    api_key=subscription_key,
+)
+
+def llm(
+    prompt: str,
+    *,
+    # Allow overriding per call; defaults mirror your variables above
+    endpoint_override: Optional[str] = None,
+    deployment_override: Optional[str] = None,
+    api_key: Optional[str] = None,
+    api_version_override: Optional[str] = None,
+) -> str:
+    """Thin wrapper around **Azure OpenAI** Chat Completions that returns text.
+
+    For Azure, `model=` must be the **deployment name** (not the base model name).
+    You can override endpoint/deployment/version/key per call if needed.
+    """
+    client = _client
+    if endpoint_override or deployment_override or api_key or api_version_override:
+        client = AzureOpenAI(
+            api_version=api_version_override or api_version,
+            azure_endpoint=endpoint_override or endpoint,
+            api_key=api_key or subscription_key,
+        )
+
     resp = client.chat.completions.create(
-        model=model,
-        messages=[
-            {"role": "system", "content": "You are a computational linguist and professional translator."},
-            {"role": "user", "content": prompt},
-        ],
-        max_tokens=900,
-        temperature=0.3,
+        model=deployment_override or deployment,     # deployment name
+        messages=[{"role": "user", "content": prompt}],
     )
-    return resp.choices[0].message.content
+    return resp.choices[0].message.content.strip()
 
 # 3) Lightweight stats (pure Python)
 def basic_stats(text: str):
